@@ -74,7 +74,10 @@ func ReadPNG(path string) image.Image {
 
 	defer f.Close()
 
-	img, _ := png.Decode(f)
+	img, derr := png.Decode(f)
+	if derr != nil {
+		log.Println(derr)
+	}
 
 	return img
 }
@@ -125,15 +128,7 @@ func ToBytes(img image.Image) []byte {
 }
 
 func PngToBytes(path string) []byte {
-	f, err := os.Open(path)
-	if err != nil {
-		log.Println(err)
-	}
-
-	img, derr := png.Decode(f)
-	if derr != nil {
-		log.Println(derr)
-	}
+	img := ReadPNG(path)
 
 	return ToBytes(img)
 }
