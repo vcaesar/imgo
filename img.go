@@ -19,6 +19,7 @@ Package img get the image info
 package img
 
 import (
+	"bytes"
 	"image"
 	"image/color"
 	"image/png"
@@ -109,4 +110,30 @@ func ToString(img image.Image) (result string) {
 	}
 
 	return
+}
+
+func ToBytes(img image.Image) []byte {
+
+	buf := new(bytes.Buffer)
+	err := png.Encode(buf, img)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	return buf.Bytes()
+}
+
+func PngToBytes(path string) []byte {
+	f, err := os.Open(path)
+	if err != nil {
+		log.Println(err)
+	}
+
+	img, derr := png.Decode(f)
+	if derr != nil {
+		log.Println(derr)
+	}
+
+	return ToBytes(img)
 }
