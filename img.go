@@ -14,9 +14,9 @@
 
 /*
 
-Package img get the image info
+Package imgo get the image info
 */
-package img
+package imgo
 
 import (
 	"bytes"

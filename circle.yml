@@ -9,7 +9,7 @@ jobs:
   build:
     docker:
       - image: golang:1.9.4
-    working_directory: /go/src/github.com/vcaesar/img
+    working_directory: /go/src/github.com/vcaesar/imgo
     steps:
       - checkout
       # specify any bash command here prefixed with `run: `
