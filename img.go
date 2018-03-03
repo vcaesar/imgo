@@ -21,6 +21,7 @@ package imgo
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/gif"
@@ -41,6 +42,21 @@ func IsBlack(c color.Color) bool {
 	r, g, b, a := c.RGBA()
 
 	return r == br && g == bg && b == bb && a == ba
+}
+
+// DecodeFile decodes image file
+func DecodeFile(fileName string) (image.Image, string, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return nil, "", fmt.Errorf("%s: %s", fileName, err)
+	}
+
+	img, fm, err := image.Decode(file)
+	if err != nil {
+		return nil, fm, fmt.Errorf("%s: %s", fileName, err)
+	}
+
+	return img, fm, nil
 }
 
 func GetSize(imagePath string) (int, int) {
@@ -137,7 +153,20 @@ func ToString(img image.Image) (result string) {
 	return
 }
 
-func ToBytes(img image.Image) []byte {
+func ToBytes(img image.Image, fm string) []byte {
+
+	buf := new(bytes.Buffer)
+
+	err := Encode(buf, img, fm)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	return buf.Bytes()
+}
+
+func ToBytesPng(img image.Image) []byte {
 
 	buf := new(bytes.Buffer)
 	err := png.Encode(buf, img)
@@ -149,8 +178,18 @@ func ToBytes(img image.Image) []byte {
 	return buf.Bytes()
 }
 
+func ImgToBytes(path string) []byte {
+	img, fm, err := DecodeFile(path)
+	if err != nil {
+		log.Println("to image...", err)
+		return nil
+	}
+
+	return ToBytes(img, fm)
+}
+
 func PngToBytes(path string) []byte {
 	img := ReadPNG(path)
 
-	return ToBytes(img)
+	return ToBytesPng(img)
 }
