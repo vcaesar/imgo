@@ -20,11 +20,17 @@ package imgo
 
 import (
 	"bytes"
+	"errors"
 	"image"
 	"image/color"
+	"image/gif"
+	"image/jpeg"
 	"image/png"
+	"io"
 	"log"
 	"os"
+
+	"golang.org/x/image/bmp"
 )
 
 var (
@@ -97,6 +103,22 @@ func Rename(filePath, to string) error {
 
 func Destroy(filePath string) error {
 	return os.Remove(filePath)
+}
+
+// Encode encode image to buf
+func Encode(out io.Writer, subImg image.Image, fm string) error {
+	switch fm {
+	case "jpeg":
+		return jpeg.Encode(out, subImg, nil)
+	case "png":
+		return png.Encode(out, subImg)
+	case "gif":
+		return gif.Encode(out, subImg, &gif.Options{})
+	case "bmp":
+		return bmp.Encode(out, subImg)
+	default:
+		return errors.New("ERROR FORMAT")
+	}
 }
 
 func ToString(img image.Image) (result string) {
