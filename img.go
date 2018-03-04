@@ -28,6 +28,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -192,4 +193,9 @@ func PngToBytes(path string) []byte {
 	img := ReadPNG(path)
 
 	return ToBytesPng(img)
+}
+
+// Save []byte to image
+func Save(path string, dist []byte) {
+	ioutil.WriteFile(path, dist, 0666)
 }
