@@ -119,12 +119,12 @@ func ModTime(filePath string) (int64, error) {
 	return f.ModTime().Unix(), nil
 }
 
-// Rename rename file
+// Rename rename file name
 func Rename(filePath, to string) error {
 	return os.Rename(filePath, to)
 }
 
-// Destroy destory file
+// Destroy destroy the file
 func Destroy(filePath string) error {
 	return os.Remove(filePath)
 }
