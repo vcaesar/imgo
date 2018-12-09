@@ -23,14 +23,15 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"io"
+	"log"
+	"os"
+
 	"image/color"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
-	"io"
 	"io/ioutil"
-	"log"
-	"os"
 
 	"golang.org/x/image/bmp"
 )
@@ -39,6 +40,7 @@ var (
 	br, bg, bb, ba = color.Black.RGBA()
 )
 
+// IsBlack color is black
 func IsBlack(c color.Color) bool {
 	r, g, b, a := c.RGBA()
 
@@ -60,6 +62,7 @@ func DecodeFile(fileName string) (image.Image, string, error) {
 	return img, fm, nil
 }
 
+// GetSize get the image's size
 func GetSize(imagePath string) (int, int) {
 	file, err := os.Open(imagePath)
 	defer file.Close()
@@ -89,6 +92,7 @@ func SaveToPNG(path string, img image.Image) {
 	png.Encode(f, img)
 }
 
+// ReadPNG read png return image.Image
 func ReadPNG(path string) image.Image {
 	f, err := os.Open(path)
 	if err != nil {
@@ -154,6 +158,7 @@ func ToString(img image.Image) (result string) {
 	return
 }
 
+// ToBytes trans image.Image to []byte
 func ToBytes(img image.Image, fm string) []byte {
 
 	buf := new(bytes.Buffer)
