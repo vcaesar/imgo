@@ -82,14 +82,30 @@ func GetSize(imagePath string) (int, int) {
 }
 
 // SaveToPNG create a png file with the image.Image
-func SaveToPNG(path string, img image.Image) {
+func SaveToPNG(path string, img image.Image) error {
 	f, err := os.Create(path)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
+		return err
 	}
 	defer f.Close()
 
-	png.Encode(f, img)
+	return png.Encode(f, img)
+}
+
+// SaveToJpeg create a jpeg file with the image.Image
+func SaveToJpeg(path string, img image.Image) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	opt := jpeg.Options{
+		Quality: 90,
+	}
+	err = jpeg.Encode(f, img, &opt)
+	return err
 }
 
 // ReadPNG read png return image.Image
