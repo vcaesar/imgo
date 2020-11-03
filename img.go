@@ -63,22 +63,24 @@ func DecodeFile(fileName string) (image.Image, string, error) {
 }
 
 // GetSize get the image's size
-func GetSize(imagePath string) (int, int) {
+func GetSize(imagePath string) (int, int, error) {
 	file, err := os.Open(imagePath)
-	defer file.Close()
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
+		return 0, 0, err
 	}
+	defer file.Close()
 
 	img, _, err := image.DecodeConfig(file)
 	if err != nil {
-		log.Println(imagePath, err)
+		// log.Println(imagePath, err)
+		return 0, 0, err
 	}
 
 	w := img.Width / 2
 	h := img.Height / 2
 
-	return w, h
+	return w, h, nil
 }
 
 // SaveToPNG create a png file with the image.Image
@@ -178,50 +180,50 @@ func ToString(img image.Image) (result string) {
 }
 
 // ToBytes trans image.Image to []byte
-func ToBytes(img image.Image, fm string) []byte {
-
+func ToBytes(img image.Image, fm string) ([]byte, error) {
 	buf := new(bytes.Buffer)
-	err := Encode(buf, img, fm)
 
+	err := Encode(buf, img, fm)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
+		return nil, err
 	}
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 // ToBytesPng trans image.Image to []byte
-func ToBytesPng(img image.Image) []byte {
-
+func ToBytesPng(img image.Image) ([]byte, error) {
 	buf := new(bytes.Buffer)
-	err := png.Encode(buf, img)
 
+	err := png.Encode(buf, img)
 	if err != nil {
-		log.Println(err)
+		// log.Println(err)
+		return nil, err
 	}
 
-	return buf.Bytes()
+	return buf.Bytes(), nil
 }
 
 // ImgToBytes trans image to []byte
-func ImgToBytes(path string) []byte {
+func ImgToBytes(path string) ([]byte, error) {
 	img, fm, err := DecodeFile(path)
 	if err != nil {
-		log.Println("To image: ", err)
-		return nil
+		// log.Println("To image: ", err)
+		return nil, err
 	}
 
 	return ToBytes(img, fm)
 }
 
 // PngToBytes trans png to []byte
-func PngToBytes(path string) []byte {
+func PngToBytes(path string) ([]byte, error) {
 	img := ReadPNG(path)
 
 	return ToBytesPng(img)
 }
 
 // Save []byte to image path
-func Save(path string, dist []byte) {
-	ioutil.WriteFile(path, dist, 0666)
+func Save(path string, dist []byte) error {
+	return ioutil.WriteFile(path, dist, 0666)
 }
