@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"log"
 	"os"
 
 	"image/color"
@@ -66,14 +65,12 @@ func DecodeFile(fileName string) (image.Image, string, error) {
 func GetSize(imagePath string) (int, int, error) {
 	file, err := os.Open(imagePath)
 	if err != nil {
-		// log.Println(err)
 		return 0, 0, err
 	}
 	defer file.Close()
 
 	img, _, err := image.DecodeConfig(file)
 	if err != nil {
-		// log.Println(imagePath, err)
 		return 0, 0, err
 	}
 
@@ -87,7 +84,6 @@ func GetSize(imagePath string) (int, int, error) {
 func SaveToPNG(path string, img image.Image) error {
 	f, err := os.Create(path)
 	if err != nil {
-		// log.Println(err)
 		return err
 	}
 	defer f.Close()
@@ -111,19 +107,19 @@ func SaveToJpeg(path string, img image.Image) error {
 }
 
 // ReadPNG read png return image.Image
-func ReadPNG(path string) image.Image {
+func ReadPNG(path string) (image.Image, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 	defer f.Close()
 
 	img, derr := png.Decode(f)
 	if derr != nil {
-		log.Println(derr)
+		return nil, derr
 	}
 
-	return img
+	return img, nil
 }
 
 // ModTime file modified time
@@ -185,7 +181,6 @@ func ToBytes(img image.Image, fm string) ([]byte, error) {
 
 	err := Encode(buf, img, fm)
 	if err != nil {
-		// log.Println(err)
 		return nil, err
 	}
 
@@ -198,7 +193,6 @@ func ToBytesPng(img image.Image) ([]byte, error) {
 
 	err := png.Encode(buf, img)
 	if err != nil {
-		// log.Println(err)
 		return nil, err
 	}
 
@@ -209,7 +203,6 @@ func ToBytesPng(img image.Image) ([]byte, error) {
 func ImgToBytes(path string) ([]byte, error) {
 	img, fm, err := DecodeFile(path)
 	if err != nil {
-		// log.Println("To image: ", err)
 		return nil, err
 	}
 
@@ -218,7 +211,10 @@ func ImgToBytes(path string) ([]byte, error) {
 
 // PngToBytes trans png to []byte
 func PngToBytes(path string) ([]byte, error) {
-	img := ReadPNG(path)
+	img, err := ReadPNG(path)
+	if err != nil {
+		return nil, err
+	}
 
 	return ToBytesPng(img)
 }
