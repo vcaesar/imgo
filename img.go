@@ -25,7 +25,9 @@ import (
 	"image"
 	"io"
 	"os"
+	"strings"
 
+	"encoding/base64"
 	"image/color"
 	"image/gif"
 	"image/jpeg"
@@ -33,6 +35,7 @@ import (
 	"io/ioutil"
 
 	"golang.org/x/image/bmp"
+	"golang.org/x/image/tiff"
 )
 
 var (
@@ -153,6 +156,8 @@ func Encode(out io.Writer, subImg image.Image, fm string) error {
 		return gif.Encode(out, subImg, &gif.Options{})
 	case "bmp":
 		return bmp.Encode(out, subImg)
+	case "tiff":
+		return tiff.Encode(out, subImg, &tiff.Options{})
 	default:
 		return errors.New("ERROR FORMAT")
 	}
@@ -222,4 +227,35 @@ func PngToBytes(path string) ([]byte, error) {
 // Save []byte to image path
 func Save(path string, dist []byte) error {
 	return ioutil.WriteFile(path, dist, 0666)
+}
+
+// ToByteImg convert image.Image to []byte
+func ToByteImg(img image.Image) []byte {
+	buff := bytes.NewBuffer(nil)
+	jpeg.Encode(buff, img, nil)
+
+	// var dist []byte
+	dist := make([]byte, base64.RawStdEncoding.EncodedLen(len(buff.Bytes())+1024))
+	base64.StdEncoding.Encode(dist, buff.Bytes())
+
+	return dist
+}
+
+// ToStringImg convert image.Image to string
+func ToStringImg(img image.Image) string {
+	return string(ToByteImg(img))
+}
+
+// StrToImg convert base64 string to image.Image
+func StrToImg(data string) (image.Image, error) {
+	reader := base64.NewDecoder(base64.StdEncoding, strings.NewReader(data))
+	m, _, err := image.Decode(reader)
+
+	return m, err
+}
+
+// ByteToImg convert []byte to image.Image
+func ByteToImg(b []byte) (image.Image, error) {
+	img, _, err := image.Decode(bytes.NewReader(b))
+	return img, err
 }
