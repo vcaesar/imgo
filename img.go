@@ -14,7 +14,7 @@
 
 /*
 
-Package imgo get the image info
+Package imgo process the image and get info
 */
 package imgo
 
@@ -83,6 +83,27 @@ func GetSize(imagePath string) (int, int, error) {
 	return w, h, nil
 }
 
+// Width return the image.Image width
+func Width(img image.Image) int {
+	return img.Bounds().Max.X
+}
+
+// Height return the image.Image height
+func Height(img image.Image) int {
+	return img.Bounds().Max.Y
+}
+
+// Save create a image file with the image.Image
+func Save(path string, img image.Image) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return Encode(f, img, getFm(path))
+}
+
 // SaveToPNG create a png file with the image.Image
 func SaveToPNG(path string, img image.Image) error {
 	f, err := os.Create(path)
@@ -109,6 +130,34 @@ func SaveToJpeg(path string, img image.Image) error {
 	return err
 }
 
+// Create create a file by path
+func Create(path string) (*os.File, error) {
+	f, err := os.Create(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	return f, err
+}
+
+// Read read the file return image.Image
+func Read(path string) (image.Image, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	fm := getFm(path)
+	return Decode(f, fm)
+}
+
+func getFm(path string) string {
+	p := strings.Split(path, ".")
+	return p[len(p)-1]
+}
+
 // ReadPNG read png return image.Image
 func ReadPNG(path string) (image.Image, error) {
 	f, err := os.Open(path)
@@ -117,12 +166,7 @@ func ReadPNG(path string) (image.Image, error) {
 	}
 	defer f.Close()
 
-	img, derr := png.Decode(f)
-	if derr != nil {
-		return nil, derr
-	}
-
-	return img, nil
+	return png.Decode(f)
 }
 
 // ModTime file modified time
@@ -145,6 +189,25 @@ func Destroy(filePath string) error {
 	return os.Remove(filePath)
 }
 
+// Decode decode image from file
+func Decode(f *os.File, fm string) (image.Image, error) {
+	switch fm {
+	case "jpeg":
+		return jpeg.Decode(f)
+	case "png":
+		return png.Decode(f)
+	case "gif":
+		return gif.Decode(f)
+	case "bmp":
+		return bmp.Decode(f)
+	case "tiff":
+		return tiff.Decode(f)
+	default:
+		return nil, errors.New("Decode: Error format")
+	}
+	// return nil, nil
+}
+
 // Encode encode image to buf
 func Encode(out io.Writer, subImg image.Image, fm string) error {
 	switch fm {
@@ -159,7 +222,7 @@ func Encode(out io.Writer, subImg image.Image, fm string) error {
 	case "tiff":
 		return tiff.Encode(out, subImg, &tiff.Options{})
 	default:
-		return errors.New("ERROR FORMAT")
+		return errors.New("Encode: ERROR FORMAT")
 	}
 }
 
@@ -224,15 +287,24 @@ func PngToBytes(path string) ([]byte, error) {
 	return ToBytesPng(img)
 }
 
-// Save []byte to image path
-func Save(path string, dist []byte) error {
+// SaveByte []byte to image path
+func SaveByte(path string, dist []byte) error {
 	return ioutil.WriteFile(path, dist, 0666)
 }
 
 // ToByteImg convert image.Image to []byte
-func ToByteImg(img image.Image) []byte {
+func ToByteImg(img image.Image, fm ...string) []byte {
 	buff := bytes.NewBuffer(nil)
-	jpeg.Encode(buff, img, nil)
+	// jpeg.Encode(buff, img, nil)
+	typ := "jpeg"
+	if len(fm) > 0 {
+		typ = fm[0]
+	}
+
+	err := Encode(buff, img, typ)
+	if err != nil {
+		return nil
+	}
 
 	// var dist []byte
 	dist := make([]byte, base64.RawStdEncoding.EncodedLen(len(buff.Bytes())+1024))
@@ -258,4 +330,23 @@ func StrToImg(data string) (image.Image, error) {
 func ByteToImg(b []byte) (image.Image, error) {
 	img, _, err := image.Decode(bytes.NewReader(b))
 	return img, err
+}
+
+// OpenBase64 return a base64 string from image file
+func OpenBase64(file string) (encode string, err error) {
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return
+	}
+	encode = base64.StdEncoding.EncodeToString(data)
+	return
+}
+
+// SaveByBase64 create a image file from base64 string
+func SaveByBase64(encode string, path string) error {
+	data, err := base64.StdEncoding.DecodeString(encode)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, data, 0666)
 }

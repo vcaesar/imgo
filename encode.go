@@ -108,6 +108,16 @@ func EncodeImg(m image.Image) (pix []uint8, stride int, err error) {
 	return
 }
 
+// ConvertToRGBA convert the image.Image to *image.RGBA
+func ConvertToRGBA(img image.Image) (r *image.RGBA) {
+	pix, stride, _ := EncodeImg(img)
+	return &image.RGBA{
+		Pix:    pix,
+		Stride: stride,
+		Rect:   image.Rect(0, 0, Width(img), Height(img)),
+	}
+}
+
 type header struct {
 	sigBM           [2]byte
 	fileSize        uint32
