@@ -314,8 +314,8 @@ func ToByteImg(img image.Image, fm ...string) []byte {
 }
 
 // ToStringImg convert image.Image to string
-func ToStringImg(img image.Image) string {
-	return string(ToByteImg(img))
+func ToStringImg(img image.Image, fm ...string) string {
+	return string(ToByteImg(img, fm...))
 }
 
 // StrToImg convert base64 string to image.Image
