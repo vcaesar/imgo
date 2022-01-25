@@ -94,14 +94,14 @@ func Height(img image.Image) int {
 }
 
 // Save create a image file with the image.Image
-func Save(path string, img image.Image) error {
+func Save(path string, img image.Image, quality ...int) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	return Encode(f, img, getFm(path))
+	return Encode(f, img, getFm(path), quality...)
 }
 
 // SaveToPNG create a png file with the image.Image
@@ -116,7 +116,12 @@ func SaveToPNG(path string, img image.Image) error {
 }
 
 // SaveToJpeg create a jpeg file with the image.Image
-func SaveToJpeg(path string, img image.Image) error {
+func SaveToJpeg(path string, img image.Image, quality ...int) error {
+	q := 70
+	if len(quality) > 0 {
+		q = quality[0]
+	}
+
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -124,7 +129,7 @@ func SaveToJpeg(path string, img image.Image) error {
 	defer f.Close()
 
 	opt := jpeg.Options{
-		Quality: 90,
+		Quality: q,
 	}
 	err = jpeg.Encode(f, img, &opt)
 	return err
@@ -209,10 +214,17 @@ func Decode(f *os.File, fm string) (image.Image, error) {
 }
 
 // Encode encode image to buf
-func Encode(out io.Writer, subImg image.Image, fm string) error {
+func Encode(out io.Writer, subImg image.Image, fm string, quality ...int) error {
+	q := 70
+	ct := 0
+	if len(quality) > 0 {
+		q = quality[0]
+		ct = quality[0]
+	}
+
 	switch fm {
 	case "jpeg":
-		return jpeg.Encode(out, subImg, nil)
+		return jpeg.Encode(out, subImg, &jpeg.Options{Quality: q})
 	case "png":
 		return png.Encode(out, subImg)
 	case "gif":
@@ -220,7 +232,7 @@ func Encode(out io.Writer, subImg image.Image, fm string) error {
 	case "bmp":
 		return bmp.Encode(out, subImg)
 	case "tiff":
-		return tiff.Encode(out, subImg, &tiff.Options{})
+		return tiff.Encode(out, subImg, &tiff.Options{Compression: tiff.CompressionType(ct)})
 	default:
 		return errors.New("Encode: ERROR FORMAT")
 	}
