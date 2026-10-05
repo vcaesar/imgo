@@ -24,6 +24,7 @@ import (
 	"image"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"encoding/base64"
@@ -51,12 +52,13 @@ func IsBlack(c color.Color) bool {
 func DecodeFile(fileName string) (image.Image, string, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
-		return nil, "", fmt.Errorf("%s: %s", fileName, err)
+		return nil, "", fmt.Errorf("%s: %w", fileName, err)
 	}
+	defer file.Close()
 
 	img, fm, err := image.Decode(file)
 	if err != nil {
-		return nil, fm, fmt.Errorf("%s: %s", fileName, err)
+		return nil, fm, fmt.Errorf("%s: %w", fileName, err)
 	}
 
 	return img, fm, nil
@@ -133,15 +135,9 @@ func SaveToJpeg(path string, img image.Image, quality ...int) error {
 	return err
 }
 
-// Create create a file by path
+// Create create a file by path, the caller must close it
 func Create(path string) (*os.File, error) {
-	f, err := os.Create(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	return f, err
+	return os.Create(path)
 }
 
 // Read read the file return image.Image
@@ -156,9 +152,9 @@ func Read(path string) (image.Image, error) {
 	return Decode(f, fm)
 }
 
+// getFm returns the lower-case file extension without the dot
 func getFm(path string) string {
-	p := strings.Split(path, ".")
-	return p[len(p)-1]
+	return strings.ToLower(strings.TrimPrefix(filepath.Ext(path), "."))
 }
 
 // ReadPNG read png return image.Image
@@ -195,7 +191,7 @@ func Destroy(filePath string) error {
 // Decode decode image from file
 func Decode(f *os.File, fm string) (image.Image, error) {
 	switch fm {
-	case "jpeg":
+	case "jpeg", "jpg":
 		return jpeg.Decode(f)
 	case "png":
 		return png.Decode(f)
@@ -203,7 +199,7 @@ func Decode(f *os.File, fm string) (image.Image, error) {
 		return gif.Decode(f)
 	case "bmp":
 		return bmp.Decode(f)
-	case "tiff":
+	case "tiff", "tif":
 		return tiff.Decode(f)
 	default:
 		return nil, errors.New("Decode: Error format")
@@ -221,7 +217,7 @@ func Encode(out io.Writer, subImg image.Image, fm string, quality ...int) error 
 	}
 
 	switch fm {
-	case "jpeg":
+	case "jpeg", "jpg":
 		return jpeg.Encode(out, subImg, &jpeg.Options{Quality: q})
 	case "png":
 		return png.Encode(out, subImg)
@@ -229,7 +225,7 @@ func Encode(out io.Writer, subImg image.Image, fm string, quality ...int) error 
 		return gif.Encode(out, subImg, &gif.Options{})
 	case "bmp":
 		return bmp.Encode(out, subImg)
-	case "tiff":
+	case "tiff", "tif":
 		return tiff.Encode(out, subImg, &tiff.Options{Compression: tiff.CompressionType(ct)})
 	default:
 		return errors.New("Encode: ERROR FORMAT")
@@ -302,25 +298,19 @@ func SaveByte(path string, dist []byte) error {
 	return os.WriteFile(path, dist, 0666)
 }
 
-// ToByte convert image.Image to []byte
+// ToByte convert image.Image to base64-encoded []byte
+// in format fm (default "jpeg"), nil on failure
 func ToByte(img image.Image, fm ...string) []byte {
-	buff := bytes.NewBuffer(nil)
-	// jpeg.Encode(buff, img, nil)
 	typ := "jpeg"
 	if len(fm) > 0 {
 		typ = fm[0]
 	}
 
-	err := Encode(buff, img, typ)
+	b, err := ToBytes(img, typ)
 	if err != nil {
 		return nil
 	}
-
-	// var dist []byte
-	dist := make([]byte, base64.RawStdEncoding.EncodedLen(len(buff.Bytes())+1024))
-	base64.StdEncoding.Encode(dist, buff.Bytes())
-
-	return dist
+	return base64.StdEncoding.AppendEncode(nil, b)
 }
 
 // ToString convert image.Image to string
